@@ -21,6 +21,7 @@ Rails.application.routes.draw do
   resources :movie_suggestions, only: [ :index ] do
     collection do
       get :lookup
+      post :fetch_trending
     end
     member do
       patch :accept

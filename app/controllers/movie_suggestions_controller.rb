@@ -12,6 +12,12 @@ class MovieSuggestionsController < ApplicationController
     render json: { error: e.message }, status: :bad_gateway
   end
 
+  def fetch_trending
+    FetchTrendingMoviesJob.perform_later
+
+    render json: { message: "Fetching trending movies" }, status: :accepted
+  end
+
   def accept
     movie = MovieSuggestion.find(params[:id])
     movie.accepted!

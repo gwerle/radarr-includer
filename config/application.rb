@@ -29,6 +29,8 @@ module RadarrIncluder
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
+    config.active_job.queue_adapter = :sidekiq
+
     # Session middleware required by the Sidekiq web UI.
     config.session_store :cookie_store, key: "_radarr_includer_session"
     config.middleware.use ActionDispatch::Cookies
