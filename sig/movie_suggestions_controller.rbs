@@ -1,0 +1,6 @@
+class MovieSuggestionsController
+  def index: -> void
+  def lookup: -> void
+  def accept: -> void
+  def reject: -> void
+end

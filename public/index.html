@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Movie Suggestions</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: system-ui, sans-serif; background: #14181c; color: #e6e6e6; padding: 2rem; }
+    h1 { margin-bottom: 1rem; font-size: 1.5rem; }
+    #search { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; max-width: 480px; }
+    #search input { flex: 1; padding: 0.5rem 0.75rem; border: 1px solid #3a444d; border-radius: 6px; background: #1e252b; color: #e6e6e6; }
+    #search button { padding: 0.5rem 1rem; border: 0; border-radius: 6px; font-weight: 600; color: #fff; background: #2a5d8f; cursor: pointer; }
+    #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .card { background: #1e252b; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+    .card img { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; background: #2a333b; }
+    .card .body { padding: 0.75rem 1rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+    .card h2 { font-size: 1.05rem; }
+    .meta { font-size: 0.8rem; color: #9ab; }
+    .overview { font-size: 0.85rem; color: #bbb; flex: 1; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .actions { display: flex; gap: 0.5rem; }
+    .actions button { flex: 1; padding: 0.5rem; border: 0; border-radius: 6px; font-weight: 600; color: #fff; cursor: pointer; }
+    .actions button:disabled { opacity: 0.5; cursor: wait; }
+    .approve { background: #2e7d32; }
+    .reject { background: #b03030; }
+    #empty { color: #9ab; }
+  </style>
+</head>
+<body>
+  <h1>Movie Suggestions</h1>
+  <form id="search">
+    <input name="term" type="search" placeholder="Search movies on Radarr…">
+    <button>Search</button>
+  </form>
+  <div id="grid"></div>
+  <p id="empty" hidden>Nothing to show.</p>
+
+  <script>
+    const TMDB_IMG = "https://image.tmdb.org/t/p/w200";
+    const grid = document.getElementById("grid");
+    const empty = document.getElementById("empty");
+
+    async function act(card, id, action) {
+      card.querySelectorAll("button").forEach(b => b.disabled = true);
+      const res = await fetch(`/movie_suggestions/${id}/${action}`, { method: "PATCH" });
+      if (res.ok) {
+        card.remove();
+        empty.hidden = grid.children.length > 0;
+      } else {
+        alert("Request failed, try again.");
+        card.querySelectorAll("button").forEach(b => b.disabled = false);
+      }
+    }
+
+    function card(movie, withActions) {
+      const el = document.createElement("div");
+      el.className = "card";
+
+      const img = document.createElement("img");
+      img.src = movie.poster || "";
+      img.alt = movie.title;
+
+      const body = document.createElement("div");
+      body.className = "body";
+      body.innerHTML = `
+        <h2></h2>
+        <div class="meta"></div>
+        <p class="overview"></p>`;
+      body.querySelector("h2").textContent = movie.title;
+      body.querySelector(".meta").textContent = [movie.year, movie.genres.join(", ")].filter(Boolean).join(" · ");
+      body.querySelector(".overview").textContent = movie.overview || "";
+
+      if (withActions) {
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        actions.innerHTML = `<button class="approve">Approve</button><button class="reject">Reject</button>`;
+        actions.querySelector(".approve").onclick = () => act(el, movie.id, "accept");
+        actions.querySelector(".reject").onclick = () => act(el, movie.id, "reject");
+        body.append(actions);
+      }
+
+      el.append(img, body);
+      return el;
+    }
+
+    function show(movies, withActions) {
+      grid.replaceChildren(...movies.map(m => card(m, withActions)));
+      empty.hidden = movies.length > 0;
+    }
+
+    function loadSuggestions() {
+      fetch("/movie_suggestions")
+        .then(r => r.json())
+        .then(list => show(list.map(m => ({
+          id: m.id,
+          title: m.title,
+          poster: m.poster_url && TMDB_IMG + m.poster_url,
+          year: (m.release_date || "").slice(0, 4),
+          genres: m.genre_names || [],
+          overview: m.overview
+        })), true));
+    }
+
+    document.getElementById("search").onsubmit = async e => {
+      e.preventDefault();
+      const term = e.target.term.value.trim();
+      if (!term) return loadSuggestions();
+
+      const res = await fetch(`/movie_suggestions/lookup?term=${encodeURIComponent(term)}`);
+      const results = await res.json();
+      if (!res.ok) return alert(results.error || "Lookup failed");
+
+      show(results.map(m => ({
+        title: m.title,
+        poster: m.remotePoster,
+        year: String(m.year || ""),
+        genres: m.genres || [],
+        overview: m.overview
+      })), false);
+    };
+
+    loadSuggestions();
+  </script>
+</body>
+</html>

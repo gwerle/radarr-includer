@@ -1,0 +1,4 @@
+# config/schedule.yml
+fetch_trending_movies:
+  cron: "0 3 * * *" # cron: Todo dia às 3:00 AM
+  class: "FetchTrendingMoviesJob"

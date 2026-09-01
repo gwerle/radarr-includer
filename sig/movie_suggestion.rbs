@@ -1,0 +1,3 @@
+class MovieSuggestion
+  def genre_names: -> Array[string]
+end

@@ -1,0 +1,23 @@
+services:
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+  web:
+    image: radarr-includer:latest
+    command: bundle exec rails server -b 0.0.0.0
+    ports:
+      - "3000:3000"
+    environment:
+      - REDIS_URL=redis://redis:6379/1
+      - RADARR_URL=${RADARR_URL}
+      - RADARR_API_KEY=${RADARR_API_KEY}
+      - TMDB_API_KEY=${TMDB_API_KEY}
+
+  sidekiq:
+    image: radarr-includer:latest
+    command: bundle exec sidekiq
+    environment:
+      - REDIS_URL=redis://redis:6379/1
+      - RADARR_URL=${RADARR_URL}
+      - RADARR_API_KEY=${RADARR_API_KEY}
+      - TMDB_API_KEY=${TMDB_API_KEY}
