@@ -52,4 +52,3 @@ gem "faraday", "~> 2.14"
 gem "sidekiq"
 gem "sidekiq-cron"
 gem "rack-cors"
-

@@ -8,7 +8,7 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
 
-  resources :movie_suggestions, only: [:index] do
+  resources :movie_suggestions, only: [ :index ] do
     collection do
       get :lookup
     end
