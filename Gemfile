@@ -48,7 +48,7 @@ group :development, :test do
   gem "dotenv-rails", "~> 3.2"
 end
 
-gem "faraday", "~> 2.14"
+gem "faraday", "~> 2.15"
 gem "sidekiq"
 gem "sidekiq-cron"
 gem "rack-cors"
